@@ -1,0 +1,71 @@
+import datetime
+import json
+
+from strategy.stock_status import StockStatus, TradingType
+from strategy.stratety import Strategy
+from util import series_util
+from validator.context import History
+
+
+# it's too hard for rule based strategy.
+# I could not wait to switch to model based strategy.
+class MinuteCheckStrategy1:
+    """
+    # simplest minute strategy:
+    1. buy if min
+    """
+
+    def initialize(self, stock, time_range):
+        pass
+
+    def check_buy(self, stock, index, context):
+        stock = stock[index]
+        date = stock['date']
+        if stock and 'minute' in stock:
+            minutes = json.loads(stock['minute'])
+            yesterday_close = minutes[0]['prevclose']
+            today_open = minutes[1]['price']
+            # check from 5th minute
+            for i in range(6, len(minutes)):
+                price = minutes[i]['price']
+                if yesterday_close <= 0:
+                    # print(f"code is {stock['code']} and yesterday close is {yesterday_close}")
+                    return False
+                if 1.005 <= price / yesterday_close <= 1.035:
+                    context.status = StockStatus.BOUGHT
+                    hour, minute = series_util.index_to_minute(i)
+                    dt = datetime.datetime(date.year, date.month, date.day, hour, minute)
+                    context.history.append(History(stock['code'], TradingType.BUY, dt, price))
+                    return True
+                # only buy in the morning
+                if index > 100:
+                    return False
+        return False
+
+    def check_sell(self, stock, index, context):
+        stock = stock[index]
+        date: datetime.datetime = stock['date']
+        if stock and 'minute' in stock:
+            minutes = json.loads(stock['minute'])
+            yesterday_close = minutes[0]['prevclose']
+            today_open = minutes[1]['price']
+            hit = False
+            for i in range(4, len(minutes)):
+                price = minutes[i]['price']
+                # enough profit
+                if 1.005 <= price / yesterday_close:
+                    hit = True
+                # too much loss
+                if price < yesterday_close and price < today_open:
+                    hit = True
+
+                # time constraint: should be sold in the morning
+                if index >= 100:
+                    hit = True
+                if hit:
+                    context.status = StockStatus.FREE
+                    hour, minute = series_util.index_to_minute(i)
+                    dt = datetime.datetime(date.year, date.month, date.day, hour, minute)
+                    context.history.append(History(stock['code'], TradingType.SELL, dt, price))
+                    return True
+        return False
