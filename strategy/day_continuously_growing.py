@@ -7,16 +7,19 @@ from validator.context import History
 
 class DayContinuouslyGrowing:
     def __init__(self):
-        self.days = 20
+        self.days = 21
         self.min_rise = 20
         self.max_fall = 10
 
     def check_buy(self, stock, index, context):
-        if self.days + index >= len(stock):
-            return False
         if context.status == StockStatus.BOUGHT:
             return False
-        values = list(map(lambda s: s['close'], stock[index:self.days + index]))
+        if self.days + index >= len(stock):
+            return False
+        print(f"code: {stock[index+1]['code'] }, date:{stock[index+1]['date'] }, delta: {stock[index+1]['delta'] }")
+        if not -0.035 <= stock[index+1]['delta'] <= 0.005:
+            return False
+        values = list(map(lambda s: s['close'], stock[index + 1:self.days + index]))
         values.reverse()
         if series_util.increase(values) > 0.2 and series_util.max_fall(values) < 0.1:
             return True

@@ -10,6 +10,7 @@ class History:
         self.trading_type = trading_type
         self.date = date
         self.price = price
+        self.profit = 0
 
 
 class Context:

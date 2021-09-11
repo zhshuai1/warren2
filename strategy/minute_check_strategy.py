@@ -1,6 +1,7 @@
 import datetime
 import json
 
+from datasource.db.db import StockSource
 from strategy.stock_status import StockStatus, TradingType
 from strategy.stratety import Strategy
 from util import series_util
@@ -16,13 +17,14 @@ class MinuteCheckStrategy1:
     """
 
     def initialize(self, stock, time_range):
-        pass
+        self.stock_source = StockSource()
 
     def check_buy(self, stock, index, context):
         stock = stock[index]
         date = stock['date']
-        if stock and 'minute' in stock:
-            minutes = json.loads(stock['minute'])
+        minutes = self.stock_source.get_stock_minute_by_code_and_date(stock['code'], stock['date'])[0]['minute']
+        if minutes is not None:
+            minutes = json.loads(minutes)
             yesterday_close = minutes[0]['prevclose']
             today_open = minutes[1]['price']
             # check from 5th minute
@@ -45,9 +47,13 @@ class MinuteCheckStrategy1:
     def check_sell(self, stock, index, context):
         stock = stock[index]
         date: datetime.datetime = stock['date']
-        if stock and 'minute' in stock:
-            minutes = json.loads(stock['minute'])
+        minutes = self.stock_source.get_stock_minute_by_code_and_date(stock['code'], stock['date'])[0]['minute']
+        if minutes is not None:
+            minutes = json.loads(minutes)
             yesterday_close = minutes[0]['prevclose']
+            if yesterday_close <= 0:
+                print(f"code is {stock['code']}, date is {stock['date']}, and yesterday_close is {yesterday_close}")
+                return False
             today_open = minutes[1]['price']
             hit = False
             for i in range(4, len(minutes)):

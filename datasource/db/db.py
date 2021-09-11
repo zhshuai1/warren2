@@ -14,5 +14,11 @@ class StockSource:
 
     def get_stock_by_code(self, code, limit=500):
         with self.sql_client.cursor() as cursor:
-            cursor.execute('select * from stock where code = %s order by date desc limit %s', (code, limit))
+            cursor.execute('select code, date, open, close, high, low, delta, volume '
+                           'from stock where code = %s order by date desc limit %s', (code, limit))
+            return cursor.fetchall()
+
+    def get_stock_minute_by_code_and_date(self, code, date):
+        with self.sql_client.cursor() as cursor:
+            cursor.execute('select minute from stock where code = %s and date >=%s limit 1', (code, date))
             return cursor.fetchall()
