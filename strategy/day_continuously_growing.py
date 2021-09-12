@@ -16,8 +16,8 @@ class DayContinuouslyGrowing:
             return False
         if self.days + index >= len(stock):
             return False
-        print(f"code: {stock[index+1]['code'] }, date:{stock[index+1]['date'] }, delta: {stock[index+1]['delta'] }")
-        if not -0.035 <= stock[index+1]['delta'] <= 0.005:
+        # print(f"code: {stock[index + 1]['code']}, date:{stock[index + 1]['date']}, delta: {stock[index + 1]['delta']}")
+        if not 0.005 <= stock[index + 1]['delta'] <= 0.035:
             return False
         values = list(map(lambda s: s['close'], stock[index + 1:self.days + index]))
         values.reverse()
@@ -26,7 +26,7 @@ class DayContinuouslyGrowing:
         return False
 
     def check_sell(self, stock, index, context):
-        return context.status == StockStatus.BOUGHT
+        return context.status == StockStatus.BOUGHT and context.code == stock[0]['code']
         # bought_date = date_util.from_year_month_day(1900, 1, 1)
         # if len(context.history) > 0:
         #     last_record: History = context.history[-1]

@@ -1,5 +1,5 @@
 from util.date_util import format_time
-
+from random import shuffle
 
 class Strategy:
     def __init__(self, day_strategy_class=None, minute_strategy_class=None):
@@ -12,8 +12,6 @@ class Strategy:
         self.date_to_index = {}
 
     def initialize(self, stock, time_range):
-        for i in range(len(stock)):
-            self.date_to_index[format_time(stock[i]['date'])] = i
         self.minute_strategy.initialize(stock, time_range)
 
     def get_name(self):
@@ -52,13 +50,13 @@ class Strategy:
         :param context:
         :return:
         """
-        pass
-        # for stock in stocks:
-        #     self.initialize(stock, index_range)
-        # for index in index_range:
-        #
-        #     if self.day_strategy.check_sell(stock, index, context):
-        #         self.minute_strategy.check_sell(stock, index, context)
-        #     if self.day_strategy.check_buy(stock, index, context):
-        #         self.minute_strategy.check_buy(stock, index, context)
+        self.initialize(stocks, index_range)
+        for index in index_range:
+            shuffle(stocks)
+            for stock in stocks:
+                if self.day_strategy.check_sell(stock, index, context):
+                    self.minute_strategy.check_sell(stock, index, context)
+                if self.day_strategy.check_buy(stock, index, context):
+                    if self.minute_strategy.check_buy(stock, index, context):
+                        break
 

@@ -17,13 +17,16 @@ class Summary:
                 print(f"stock {self.code} is abnormal.")
             self.trading_time += 1
             this_profit = history[i + 1].price / history[i].price
-            history[i + 1].profit = this_profit-1
+            history[i + 1].profit = this_profit - 1
             self.total_profit *= this_profit
             this_profit -= 1
             if this_profit > self.max_profit:
                 self.max_profit = this_profit
             if this_profit < self.max_loss:
                 self.max_loss = this_profit
+
+            if not -0.1 <= this_profit <= 0.1:
+                print(f"code: {history[i].code}, date: {history[i].date}, delta: {this_profit}")
 
     def __str__(self):
         return json.dumps(self.__dict__)

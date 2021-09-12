@@ -5,12 +5,13 @@ from validator.summary import Summary
 
 
 class History:
-    def __init__(self, code, trading_type, date, price):
+    def __init__(self, code, trading_type, date, price, profit=0, reason=None):
         self.code = code
         self.trading_type = trading_type
         self.date = date
         self.price = price
-        self.profit = 0
+        self.profit = profit
+        self.reason = reason
 
 
 class Context:
