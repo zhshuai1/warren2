@@ -6,9 +6,11 @@ from math import trunc
 import numpy as np
 from keras.callbacks import TensorBoard
 from keras.layers import Dense, Input
+from keras.metrics import Metric
 from keras.models import Model, load_model
-from keras.utils.np_utils import to_categorical
 from keras.optimizer_v2.rmsprop import RMSprop
+from keras.utils.np_utils import to_categorical
+
 from util import series_util
 
 
@@ -106,6 +108,24 @@ class CategoricalModel:
         self.model.evaluate(inputs, outputs)
 
 
+class Ge3Recall(Metric):
+
+    def __init__(self):
+        super(Ge3Recall, self).__init__(name='ge3recall')
+        self.total = 0
+        self.count = 0
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        for i in range(len(y_true)):
+            if y_true[i][0] == 1:
+                self.total += 1
+                if y_pred[i][0] >= 0.5:
+                    self.count += 1
+
+    def result(self):
+        return self.count / self.total
+
+
 class RecallModel:
     def __init__(self, days):
         self.days = days
@@ -117,9 +137,10 @@ class RecallModel:
         x = Dense(days, activation='sigmoid')(x)
         output = Dense(2, activation='sigmoid')(x)
         self.model = Model(inputs=inputs, outputs=output)
-        optimizer = RMSprop(learning_rate=0.05)
+        optimizer = RMSprop(learning_rate=0.02)
         self.model.compile(optimizer=optimizer, loss='binary_crossentropy',
-                           metrics=['acc', 'binary_accuracy', 'Recall', 'Precision', 'binary_crossentropy', 'mse'])
+                           metrics=['acc', 'binary_accuracy', 'Recall', 'Precision', 'binary_crossentropy', 'mse',
+                                    Ge3Recall])
 
     def gen_day_data(self, day_data):
         open = day_data['open']
@@ -173,8 +194,9 @@ class RecallModel:
 
     def train_model(self):
         ss = StockSource()
-        all_codes = ss.get_all_stocks()
-        codes = all_codes[:1000]
+        all_codes = list(ss.get_all_stocks())
+        random.shuffle(all_codes)
+        codes = all_codes[:200]
         stocks = [ss.get_stock_by_code(code['code'], limit=200) for code in codes]
         instances = self.gen_training_data(stocks)
         random.shuffle(instances)
@@ -185,7 +207,7 @@ class RecallModel:
             print(f'input {i}: {inputs[i]}, and output {i}: {outputs[i]}')
         tensorboard_callback = TensorBoard(log_dir="./logs")
         self.model = load_model('recall1.model')
-        self.model.fit(inputs, outputs, epochs=300, batch_size=50, callbacks=[tensorboard_callback])
+        self.model.fit(inputs, outputs, epochs=300, batch_size=100, callbacks=[tensorboard_callback])
         self.model.save('recall1.model')
         self.model.evaluate(inputs, outputs)
         res = self.model.predict(inputs)
@@ -193,7 +215,7 @@ class RecallModel:
             print(f"{inputs[i]}:{outputs[i]}:{(int(res[i][0] > 0.5), int(res[i][1] > 0.5))}:{res[i]}")
 
         # test
-        codes = all_codes[1100:1500]
+        codes = all_codes[3100:3500]
         stocks = [ss.get_stock_by_code(code['code'], limit=200) for code in codes]
         instances = self.gen_training_data(stocks)
         random.shuffle(instances)
@@ -209,7 +231,8 @@ class RecallModel:
         self.model.load_weights('recall1.model')
         # test
         ss = StockSource()
-        all_codes = ss.get_all_stocks()
+        all_codes = list(ss.get_all_stocks())
+        random.shuffle(all_codes)
         codes = all_codes[1100:1500]
         stocks = [ss.get_stock_by_code(code['code'], limit=200) for code in codes]
         instances = self.gen_training_data(stocks)
