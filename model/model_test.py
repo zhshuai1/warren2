@@ -133,7 +133,7 @@ class TestMain(TestCase):
         y = np.array(list(map(lambda e: e['y'], instances)))
 
         # train & validate
-        model.fit([x1, x2], y, epochs=1000, batch_size=1000, callbacks=[TensorBoard()])
+        model.fit([x1, x2], y, epochs=1000, batch_size=1000, validation_split=0.1, callbacks=[TensorBoard()])
         model.evaluate([x1, x2], y)
         model.save('lstm.model')
         num = len(y)
@@ -147,22 +147,20 @@ class TestMain(TestCase):
         model = self.build_model()
         model.load_weights('lstm.model')
 
+    def test_conv2d(self):
+        conv2d = Conv2D(3, (2, 2), kernel_initializer=Ones(), bias_initializer=Zeros())
+        data = np.arange(0., 120)
+        data = data.reshape((1, 2, 3, 4, 5))
+        y = conv2d(data)
+        print(f"{data}")
+        print(f"{y}")
+        print(f"{y.shape}")
 
-def test_conv2d(self):
-    conv2d = Conv2D(3, (2, 2), kernel_initializer=Ones(), bias_initializer=Zeros())
-    data = np.arange(0., 120)
-    data = data.reshape((1, 2, 3, 4, 5))
-    y = conv2d(data)
-    print(f"{data}")
-    print(f"{y}")
-    print(f"{y.shape}")
-
-
-def test_conv1d(self):
-    conv1d = Conv1D(3, 2, kernel_initializer=Ones(), bias_initializer=Zeros())
-    data = np.arange(0., 120)
-    data = data.reshape((1, 2, 3, 4, 5))
-    y = conv1d(data)
-    print(f"{data}")
-    print(f"{y}")
-    print(f"{y.shape}")
+    def test_conv1d(self):
+        conv1d = Conv1D(3, 2, kernel_initializer=Ones(), bias_initializer=Zeros())
+        data = np.arange(0., 120)
+        data = data.reshape((1, 2, 3, 4, 5))
+        y = conv1d(data)
+        print(f"{data}")
+        print(f"{y}")
+        print(f"{y.shape}")
